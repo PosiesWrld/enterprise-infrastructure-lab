@@ -4,7 +4,7 @@
 
 Hands-on enterprise infrastructure lab spanning on-premises Windows identity and Microsoft Azure. Focused on deployment, access control, network segmentation, hybrid identity, and systematic troubleshooting.
 
-> **Status:** Active lab. Logical diagrams represent documented configurations, not a production environment or a live Azure export.
+> **Project Status:** Ongoing hands-on infrastructure lab. Architecture diagrams illustrate the implemented environment and will evolve as new components are deployed.
 
 ## Architecture
 
