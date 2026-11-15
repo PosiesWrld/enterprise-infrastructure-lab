@@ -52,24 +52,34 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  subgraph WIN["Existing Azure Windows infrastructure"]
+  subgraph WINDOWS["Windows Azure environment"]
     direction TB
-    W1["VNet1 · 10.10.0.0/16"]
-    W1 --> WS["ServerSubnet · 10.10.1.0/24<br/>AZ-SRV01 · Windows · restricted RDP"]
-    W1 --> WT["TestSubnet · 10.10.2.0/24<br/>AZ-TEST01 · private-only · NAT egress"]
-    W2["VNet2 · 10.11.0.0/16"]
-    W2 --> WA["AppSubnet · 10.11.10.0/24<br/>AZ-APP01 · private-only"]
-    W1 <-->|"VNet peering"| W2
+    WV1["VNet1: 10.10.0.0/16"]
+    WSRV["ServerSubnet: AZ-SRV01"]
+    WTEST["TestSubnet: AZ-TEST01"]
+    WV2["VNet2: 10.11.0.0/16"]
+    WAPP["AppSubnet: AZ-APP01"]
+    WV1 --> WSRV
+    WV1 --> WTEST
+    WV2 --> WAPP
+    WV1 <--> WV2
   end
-  subgraph LINUX["New AZ-104 Linux lab · separate subscription"]
+
+  subgraph LINUX["Linux AZ-104 environment - separate subscription"]
     direction TB
-    LV["VNet-Lab · 10.20.0.0/16"]
-    LV --> LS["ComputeSubnet · 10.20.1.0/24"]
-    LS --> VM["AZ-LINUX01 · Ubuntu<br/>Public IP · SSH/22 restricted by NSG"]
-    VM --> OS["OS disk · 30 GiB · ext4 root"]
-    VM --> DATA["Data disk · 32 GiB · Standard SSD LRS<br/>Attached as /dev/sdb · not yet mounted"]
+    LVNET["VNet-Lab: 10.20.0.0/16"]
+    LSUB["ComputeSubnet: 10.20.1.0/24"]
+    LVM["AZ-LINUX01: Ubuntu; restricted SSH"]
+    LOS["OS disk: 30 GiB"]
+    LDATA["Data disk: 32 GiB; attached, not mounted"]
+    LVNET --> LSUB
+    LSUB --> LVM
+    LVM --> LOS
+    LVM --> LDATA
   end
-  WIN -.-|"Future cross-tenant integration<br/>NOT configured"| LINUX
+
+  WAPP -.-> FUTURE["Future cross-tenant integration - NOT configured"]
+  FUTURE -.-> LVM
 ```
 
 *Linux lab names and CIDRs are the intended design; confirm deployed values in Azure Portal. The dotted link is a future plan, not a working connection.*
