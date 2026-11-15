@@ -1,6 +1,6 @@
 # Enterprise Infrastructure Lab
 
-**Windows Server 2025 · Active Directory · Microsoft Entra ID · Azure Networking · Security**
+**Windows Server 2025 · Active Directory · Microsoft Entra ID · Azure Networking · Ubuntu Linux · Managed Disks · Security**
 
 Hands-on enterprise infrastructure lab spanning on-premises Windows identity and Microsoft Azure. Focused on deployment, access control, network segmentation, hybrid identity, and systematic troubleshooting.
 
@@ -21,7 +21,9 @@ flowchart LR
   DC -->|"Entra Cloud Sync<br/>gMSA · Password Hash Sync<br/>OU-scoped provisioning"| ENTRA["Microsoft Entra ID<br/>Synced user identities"]
 ```
 
-### Azure network
+### Azure network environments
+
+The Windows infrastructure and the newer Ubuntu AZ-104 lab are shown side by side. **They are separate environments/subscriptions; no cross-tenant connection is implemented yet.**
 ```mermaid
 flowchart TB
   subgraph V1["VNet1 · 10.10.0.0/16"]
@@ -46,6 +48,32 @@ flowchart TB
   NAT --> INTERNET["Internet"]
 ```
 
+### Windows and Linux Azure labs — side-by-side view
+
+```mermaid
+flowchart LR
+  subgraph WIN["Existing Azure Windows infrastructure"]
+    direction TB
+    W1["VNet1 · 10.10.0.0/16"]
+    W1 --> WS["ServerSubnet · 10.10.1.0/24<br/>AZ-SRV01 · Windows · restricted RDP"]
+    W1 --> WT["TestSubnet · 10.10.2.0/24<br/>AZ-TEST01 · private-only · NAT egress"]
+    W2["VNet2 · 10.11.0.0/16"]
+    W2 --> WA["AppSubnet · 10.11.10.0/24<br/>AZ-APP01 · private-only"]
+    W1 <-->|"VNet peering"| W2
+  end
+  subgraph LINUX["New AZ-104 Linux lab · separate subscription"]
+    direction TB
+    LV["VNet-Lab · 10.20.0.0/16"]
+    LV --> LS["ComputeSubnet · 10.20.1.0/24"]
+    LS --> VM["AZ-LINUX01 · Ubuntu<br/>Public IP · SSH/22 restricted by NSG"]
+    VM --> OS["OS disk · 30 GiB · ext4 root"]
+    VM --> DATA["Data disk · 32 GiB · Standard SSD LRS<br/>Attached as /dev/sdb · not yet mounted"]
+  end
+  WIN -.-|"Future cross-tenant integration<br/>NOT configured"| LINUX
+```
+
+*Linux lab names and CIDRs are the intended design; confirm deployed values in Azure Portal. The dotted link is a future plan, not a working connection.*
+
 *Hybrid identity synchronization does not imply an on-premises-to-Azure VPN or private network connection.*
 
 ## What I implemented
@@ -55,9 +83,10 @@ flowchart TB
 | Windows identity | Windows Server 2025 DC, `corp.local`, AD DS, DNS, domain-joined Windows 11 client, OUs and groups |
 | Group Policy | Password and account lockout policies; standard-user restrictions |
 | Hybrid identity | Entra Cloud Sync provisioning agent, gMSA, password hash synchronization, pilot OU scoping |
-| Azure compute | Windows Server VMs in segmented subnets, private addressing, restricted RDP |
+| Azure compute | Windows Server VMs in segmented subnets, private addressing, restricted RDP; Ubuntu VM with source-restricted SSH |
 | Networking | Two VNets, subnet NSGs, NAT Gateway, peering, private DNS, route-table experiments |
-| Diagnostics | Network Watcher Next Hop, IP Flow Verify, Connection Troubleshoot; PowerShell and Windows network tools |
+| Linux and storage (Nov 14, 2026) | Deployed `AZ-LINUX01`, authenticated using an SSH key from PowerShell, attached a 32 GiB Standard SSD LRS managed disk; verified `/dev/sdb` with `lsblk` (not yet partitioned or mounted) |
+| Diagnostics | Network Watcher Next Hop, IP Flow Verify, Connection Troubleshoot; PowerShell, Windows and Linux CLI tools |
 
 ## Troubleshooting and validation
 
@@ -79,6 +108,6 @@ flowchart TB
 
 ## Roadmap
 
-Planned, **not yet claimed as implemented**: Azure storage, monitoring/logging, backup/recovery, and hybrid device management.
+Next: partition/format the Linux data disk, mount by UUID using `/etc/fstab`, verify persistence after reboot, and test disk snapshots. Later: monitoring/logging, backup/recovery, hybrid device management, and **cross-tenant connectivity** between the currently separate Azure environments.
 
 *Supporting configuration screenshots and validation evidence are documented in a separate internal wiki. The full wiki is intentionally excluded from this public repository; sanitized screenshots may be added under `docs/evidence/`.*
